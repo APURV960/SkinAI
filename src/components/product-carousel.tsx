@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from 'react';
@@ -11,7 +12,7 @@ interface ProductCarouselProps {
 
 export function ProductCarousel({ concerns }: ProductCarouselProps) {
   const recommendedProducts = useMemo(() => {
-    if (!concerns.length) {
+    if (!concerns || !concerns.length) {
       return products;
     }
     const lowerCaseConcerns = concerns.map(c => c.toLowerCase().replace(/\s+/g, '-'));
@@ -27,7 +28,6 @@ export function ProductCarousel({ concerns }: ProductCarouselProps) {
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold mb-4">Recommended Products</h2>
       <Carousel
         opts={{
           align: "start",
@@ -50,3 +50,5 @@ export function ProductCarousel({ concerns }: ProductCarouselProps) {
     </div>
   );
 }
+
+    
