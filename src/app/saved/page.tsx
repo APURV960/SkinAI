@@ -1,12 +1,13 @@
 
 'use client';
 
-import { SkinAnalysisView } from '@/components/skin-analysis-view';
 import { Button } from '@/components/ui/button';
-import { Heart, Leaf } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SavedProducts } from '@/components/saved-products';
+import { Home, Leaf } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Home_Page() {
+export default function SavedPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -17,9 +18,9 @@ export default function Home_Page() {
           </Link>
           <nav>
             <Button variant="ghost" asChild>
-              <Link href="/saved">
-                <Heart className="h-4 w-4 mr-2" />
-                Saved Products
+              <Link href="/">
+                <Home className="h-4 w-4 mr-2" />
+                Home
               </Link>
             </Button>
           </nav>
@@ -27,7 +28,18 @@ export default function Home_Page() {
       </header>
 
       <main className="flex-1">
-        <SkinAnalysisView />
+        <div className="container mx-auto py-8 px-4">
+          <div className="max-w-4xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Saved Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SavedProducts />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
 
       <footer className="py-6 md:px-8 md:py-0 bg-background border-t">
