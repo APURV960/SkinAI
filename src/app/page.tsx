@@ -3,10 +3,26 @@
 
 import { SkinAnalysisView } from '@/components/skin-analysis-view';
 import { Button } from '@/components/ui/button';
-import { Heart, Leaf, LogIn, UserPlus } from 'lucide-react';
+import { Heart, Leaf, LogIn, LogOut, UserPlus } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home_Page() {
+  const { user, loading } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Logged out successfully."});
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Error logging out.", description: (error as Error).message });
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -16,24 +32,36 @@ export default function Home_Page() {
             <span className="font-bold text-lg">SkinAI Advisor</span>
           </Link>
           <nav className="flex items-center space-x-2">
-            <Button variant="ghost" asChild>
-              <Link href="/saved">
-                <Heart className="h-4 w-4 mr-2" />
-                Saved Products
-              </Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                Login
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="/register">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Register
-              </Link>
-            </Button>
+            {user && (
+              <Button variant="ghost" asChild>
+                <Link href="/saved">
+                  <Heart className="h-4 w-4 mr-2" />
+                  Saved Products
+                </Link>
+              </Button>
+            )}
+            {!loading &&
+              (user ? (
+                <Button onClick={handleLogout} variant="ghost">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link href="/login">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Login
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/register">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Register
+                    </Link>
+                  </Button>
+                </>
+              ))}
           </nav>
         </div>
       </header>

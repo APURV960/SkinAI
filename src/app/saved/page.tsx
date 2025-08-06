@@ -4,10 +4,29 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SavedProducts } from '@/components/saved-products';
-import { Home, Leaf, LogIn, UserPlus } from 'lucide-react';
+import { Home, Leaf, LogIn, LogOut, UserPlus } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function SavedPage() {
+  const { user, loading } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Logged out successfully."});
+      router.push('/');
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Error logging out.", description: (error as Error).message });
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -23,18 +42,28 @@ export default function SavedPage() {
                 Home
               </Link>
             </Button>
-             <Button variant="ghost" asChild>
-              <Link href="/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                Login
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="/register">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Register
-              </Link>
-            </Button>
+            {!loading &&
+              (user ? (
+                <Button onClick={handleLogout} variant="ghost">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link href="/login">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Login
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/register">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Register
+                    </Link>
+                  </Button>
+                </>
+              ))}
           </nav>
         </div>
       </header>
@@ -42,14 +71,28 @@ export default function SavedPage() {
       <main className="flex-1">
         <div className="container mx-auto py-8 px-4">
           <div className="max-w-4xl mx-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Saved Products</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SavedProducts />
-              </CardContent>
-            </Card>
+            {user ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Saved Products</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SavedProducts />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Please Log In</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>You need to be logged in to see your saved products.</p>
+                  <Button asChild className="mt-4">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>
