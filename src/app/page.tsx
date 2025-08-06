@@ -3,7 +3,7 @@
 
 import { SkinAnalysisView } from '@/components/skin-analysis-view';
 import { Button } from '@/components/ui/button';
-import { Heart, Leaf } from 'lucide-react';
+import { Heart, Leaf, LogIn, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home_Page() {
@@ -15,11 +15,23 @@ export default function Home_Page() {
             <Leaf className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg">SkinAI Advisor</span>
           </Link>
-          <nav>
+          <nav className="flex items-center space-x-2">
             <Button variant="ghost" asChild>
               <Link href="/saved">
                 <Heart className="h-4 w-4 mr-2" />
                 Saved Products
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/login">
+                <LogIn className="h-4 w-4 mr-2" />
+                Login
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/register">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Register
               </Link>
             </Button>
           </nav>

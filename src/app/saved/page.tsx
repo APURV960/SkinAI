@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SavedProducts } from '@/components/saved-products';
-import { Home, Leaf } from 'lucide-react';
+import { Home, Leaf, LogIn, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SavedPage() {
@@ -16,11 +16,23 @@ export default function SavedPage() {
             <Leaf className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg">SkinAI Advisor</span>
           </Link>
-          <nav>
+          <nav className="flex items-center space-x-2">
             <Button variant="ghost" asChild>
               <Link href="/">
                 <Home className="h-4 w-4 mr-2" />
                 Home
+              </Link>
+            </Button>
+             <Button variant="ghost" asChild>
+              <Link href="/login">
+                <LogIn className="h-4 w-4 mr-2" />
+                Login
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/register">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Register
               </Link>
             </Button>
           </nav>
