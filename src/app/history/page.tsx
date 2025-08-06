@@ -1,23 +1,27 @@
 
 'use client';
 
-import { SkinAnalysisView } from '@/components/skin-analysis-view';
 import { Button } from '@/components/ui/button';
-import { Heart, Leaf, LogIn, LogOut, UserPlus, History } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AnalysisHistory } from '@/components/analysis-history';
+import { Home, Leaf, LogIn, LogOut, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
-export default function Home_Page() {
+export default function HistoryPage() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
       toast({ title: "Logged out successfully."});
+      router.push('/');
     } catch (error) {
       toast({ variant: 'destructive', title: "Error logging out.", description: (error as Error).message });
     }
@@ -32,22 +36,12 @@ export default function Home_Page() {
             <span className="font-bold text-lg">SkinAI Advisor</span>
           </Link>
           <nav className="flex items-center space-x-2">
-            {user && (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link href="/history">
-                    <History className="h-4 w-4 mr-2" />
-                    History
-                  </Link>
-                </Button>
-                <Button variant="ghost" asChild>
-                  <Link href="/saved">
-                    <Heart className="h-4 w-4 mr-2" />
-                    Saved Products
-                  </Link>
-                </Button>
-              </>
-            )}
+            <Button variant="ghost" asChild>
+              <Link href="/">
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Link>
+            </Button>
             {!loading &&
               (user ? (
                 <Button onClick={handleLogout} variant="ghost">
@@ -75,7 +69,32 @@ export default function Home_Page() {
       </header>
 
       <main className="flex-1">
-        <SkinAnalysisView />
+        <div className="container mx-auto py-8 px-4">
+          <div className="max-w-4xl mx-auto">
+            {user ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Analysis History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AnalysisHistory />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Please Log In</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>You need to be logged in to see your analysis history.</p>
+                  <Button asChild className="mt-4">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </main>
 
       <footer className="py-6 md:px-8 md:py-0 bg-background border-t">

@@ -28,7 +28,11 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { ProductCarousel } from './product-carousel';
-import { SavedProducts } from './saved-products';
+import { useAuth } from '@/hooks/use-auth';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+
 
 type AnalysisResult = {
   concerns: string[];
@@ -51,6 +55,9 @@ export function SkinAnalysisView() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -65,6 +72,22 @@ export function SkinAnalysisView() {
     }
   };
 
+  const saveAnalysisToFirestore = async (result: AnalysisResult) => {
+    if (!user) return;
+    try {
+      const historyRef = collection(db, "users", user.uid, "analysisHistory");
+      await addDoc(historyRef, {
+        ...result,
+        timestamp: serverTimestamp(),
+      });
+      toast({ title: "Analysis Saved", description: "Your analysis report has been saved to your history." });
+    } catch (e) {
+      console.error("Error saving analysis to Firestore: ", e);
+      toast({ variant: 'destructive', title: "Save Failed", description: "Could not save your analysis to your history." });
+    }
+  };
+
+
   const handleAnalysis = useCallback(async () => {
     if (!photo) return;
     setIsLoading(true);
@@ -76,6 +99,9 @@ export function SkinAnalysisView() {
         const photoDataUri = reader.result as string;
         const result = await analyzeSkinCondition({ photoDataUri });
         setAnalysis(result);
+        if (user) {
+          await saveAnalysisToFirestore(result);
+        }
       };
     } catch (e) {
       setError('An error occurred during analysis. Please try again.');
@@ -83,7 +109,7 @@ export function SkinAnalysisView() {
     } finally {
       setIsLoading(false);
     }
-  }, [photo]);
+  }, [photo, user]);
 
   const resetState = () => {
     setPhoto(null);
@@ -174,7 +200,6 @@ export function SkinAnalysisView() {
             </CardContent>
           </Card>
           <ProductCarousel concerns={analysis.concerns} />
-          <SavedProducts />
           <div className="text-center pt-4">
             <Button onClick={resetState} variant="outline">
               Start New Analysis
@@ -246,5 +271,3 @@ export function SkinAnalysisView() {
     </div>
   );
 }
-
-    
