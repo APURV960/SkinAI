@@ -22,7 +22,7 @@ export type AnalysisRecord = {
   timestamp: {
     seconds: number;
     nanoseconds: number;
-  };
+  } | null;
 };
 
 export function AnalysisHistory() {
@@ -75,7 +75,14 @@ export function AnalysisHistory() {
         <AccordionItem value={record.id} key={record.id}>
           <AccordionTrigger>
             <div className="flex justify-between w-full pr-4">
-                <span>Analysis from {format(new Date(record.timestamp.seconds * 1000), 'PPP')}</span>
+                <span>
+                  Analysis from{' '}
+                  {record.timestamp ? (
+                    format(new Date(record.timestamp.seconds * 1000), 'PPP')
+                  ) : (
+                    'a few moments ago'
+                  )}
+                </span>
                 <span className="text-sm text-muted-foreground">{record.concerns.length} concern(s)</span>
             </div>
             </AccordionTrigger>
