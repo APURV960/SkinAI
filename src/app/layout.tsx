@@ -7,6 +7,9 @@ import { AuthProvider } from '@/hooks/use-auth';
 export const metadata: Metadata = {
   title: 'SkinAI Advisor',
   description: 'Your personal AI-powered skincare advisor.',
+  icons:{
+    icon: "./favicon.ico",
+  } 
 };
 
 export default function RootLayout({
