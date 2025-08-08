@@ -72,12 +72,13 @@ export function SkinAnalysisView() {
     }
   };
 
-  const saveAnalysisToFirestore = async (result: AnalysisResult) => {
+  const saveAnalysisToFirestore = async (result: AnalysisResult, photoDataUri: string) => {
     if (!user) return;
     try {
       const historyRef = collection(db, "users", user.uid, "analysisHistory");
       await addDoc(historyRef, {
         ...result,
+        photoDataUri,
         timestamp: serverTimestamp(),
       });
       toast({ title: "Analysis Saved", description: "Your analysis report has been saved to your history." });
@@ -100,7 +101,7 @@ export function SkinAnalysisView() {
         const result = await analyzeSkinCondition({ photoDataUri });
         setAnalysis(result);
         if (user) {
-          await saveAnalysisToFirestore(result);
+          await saveAnalysisToFirestore(result, photoDataUri);
         }
       };
     } catch (e) {

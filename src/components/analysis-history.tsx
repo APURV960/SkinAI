@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
@@ -19,6 +20,7 @@ export type AnalysisRecord = {
   id: string;
   concerns: string[];
   report: string;
+  photoDataUri?: string;
   timestamp: {
     seconds: number;
     nanoseconds: number;
@@ -87,18 +89,36 @@ export function AnalysisHistory() {
             </div>
             </AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-2">Identified Concerns:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {record.concerns.map((concern, index) => (
-                    <Badge key={index} variant="secondary">{concern}</Badge>
-                  ))}
+            <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
+              {record.photoDataUri && (
+                <div className="md:col-span-1">
+                  <h4 className="font-semibold mb-2">Analysis Photo</h4>
+                  <div className="relative aspect-square w-full rounded-lg overflow-hidden">
+                    <Image
+                    src={record.photoDataUri}
+                    alt="analyzed photo"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width:760px) 100 vw, 33vw"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">AI Report:</h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{record.report}</p>
+              )}
+              <div className={record.photoDataUri ? "md:col-span-2" : "md:col-span-3"}>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Identified Concerns:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {record.concerns.map((concern, index) => (
+                        <Badge key={index} variant="secondary">{concern}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">AI Report:</h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{record.report}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </AccordionContent>
