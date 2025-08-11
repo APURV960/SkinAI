@@ -71,7 +71,7 @@ export default function RegisterPage() {
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
-                placeholder="John Doe"
+                placeholder="Apurva Anand"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -83,7 +83,7 @@ export default function RegisterPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="xyz@gmail.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -95,6 +95,7 @@ export default function RegisterPage() {
               <Input
                 id="password"
                 type="password"
+                placeholder='password...'
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
