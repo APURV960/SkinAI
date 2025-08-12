@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useCallback, ChangeEvent } from 'react';
+import { useState, useCallback, ChangeEvent, useRef } from 'react';
 import Image from 'next/image';
 import { analyzeSkinCondition } from '@/ai/flows/analyze-skin-condition';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   UploadCloud,
   Sparkles,
@@ -26,6 +25,7 @@ import {
   Bot,
   Sun,
   RefreshCw,
+  Loader,
 } from 'lucide-react';
 import { ProductCarousel } from './product-carousel';
 import { useAuth } from '@/hooks/use-auth';
@@ -57,6 +57,7 @@ export function SkinAnalysisView() {
 
   const { user } = useAuth();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -91,23 +92,31 @@ export function SkinAnalysisView() {
 
   const handleAnalysis = useCallback(async () => {
     if (!photo) return;
+    
     setIsLoading(true);
     setError(null);
+    
     try {
       const reader = new FileReader();
       reader.readAsDataURL(photo);
-      reader.onload = async () => {
-        const photoDataUri = reader.result as string;
-        const result = await analyzeSkinCondition({ photoDataUri });
-        setAnalysis(result);
-        if (user) {
-          await saveAnalysisToFirestore(result, photoDataUri);
+      reader.onloadend = async () => {
+        try {
+          const photoDataUri = reader.result as string;
+          const result = await analyzeSkinCondition({ photoDataUri });
+          setAnalysis(result);
+          if (user) {
+            await saveAnalysisToFirestore(result, photoDataUri);
+          }
+        } catch(e) {
+           setError('An error occurred during analysis. Please try again.');
+           console.error(e);
+        } finally {
+           setIsLoading(false);
         }
-      };
+      }
     } catch (e) {
-      setError('An error occurred during analysis. Please try again.');
+      setError('An error occurred reading the file. Please try again.');
       console.error(e);
-    } finally {
       setIsLoading(false);
     }
   }, [photo, user]);
@@ -118,23 +127,20 @@ export function SkinAnalysisView() {
     setAnalysis(null);
     setIsLoading(false);
     setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const renderContent = () => {
     if (isLoading) {
       return (
         <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <div className="flex gap-2 pt-4">
-              <Skeleton className="h-8 w-20 rounded-full" />
-              <Skeleton className="h-8 w-20 rounded-full" />
+          <CardContent className="flex flex-col items-center justify-center p-12 gap-4">
+            <Loader className="w-12 h-12 animate-spin text-primary" />
+            <div className="text-center">
+              <p className="text-lg font-medium">Analyzing your skin...</p>
+              <p className="text-sm text-muted-foreground">This may take a few moments.</p>
             </div>
           </CardContent>
         </Card>
@@ -147,6 +153,7 @@ export function SkinAnalysisView() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Analysis Failed</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
+          <Button onClick={resetState} variant="outline" className="mt-4">Try Again</Button>
         </Alert>
       );
     }
@@ -228,8 +235,8 @@ export function SkinAnalysisView() {
                     <Image
                       src={photoPreview}
                       alt="Selected photo"
-                      layout="fill"
-                      objectFit="cover"
+                      fill
+                      className="object-cover"
                     />
                   </div>
                 ) : (
@@ -251,6 +258,7 @@ export function SkinAnalysisView() {
               accept="image/png, image/jpeg, image/webp"
               className="sr-only"
               onChange={handlePhotoChange}
+              ref={fileInputRef}
             />
           </div>
           <Button
