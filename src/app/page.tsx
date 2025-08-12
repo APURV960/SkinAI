@@ -1,18 +1,22 @@
 'use client';
-
+import {useState} from 'react';
 import { SkinAnalysisView } from '@/components/skin-analysis-view';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Leaf, LogIn, LogOut, UserPlus, History, Sparkles, ShieldCheck, Microscope } from 'lucide-react';
+import { Heart, Leaf, LogIn, LogOut, UserPlus, History, Sparkles, ShieldCheck, Microscope, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
 
 export default function Home_Page() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
 
   const handleLogout = async () => {
     try {
@@ -100,36 +104,46 @@ export default function Home_Page() {
             <Leaf className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg">SkinAI Advisor</span>
           </Link>
-          <nav className="flex items-center space-x-2">
+          <div className="md:hidden pr-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </div>
+          <nav className="hidden md:flex items-center space-x-2">
             {!loading &&
               (user ? (
                 <>
-                   <Button variant="ghost" asChild>
+                   <Button variant="ghost" asChild className="w-full" onClick={() => setIsMenuOpen(false)}>
                     <Link href="/history">
                       <History className="h-4 w-4 mr-2" />
                       History
                     </Link>
                   </Button>
-                  <Button variant="ghost" asChild>
+                  <Button variant="ghost" asChild className="w-full" onClick={() => setIsMenuOpen(false)}>
                     <Link href="/saved">
                       <Heart className="h-4 w-4 mr-2" />
                       Saved Products
                     </Link>
                   </Button>
-                  <Button onClick={handleLogout} variant="ghost">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </Button>
+                  <Button onClick={() => { handleLogout(); setIsMenuOpen(false); }} variant="ghost" className="w-full">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" asChild>
+                  <Button variant="ghost" asChild className="w-full" onClick={() => setIsMenuOpen(false)}>
                     <Link href="/login">
                       <LogIn className="h-4 w-4 mr-2" />
                       Login
                     </Link>
                   </Button>
-                  <Button asChild>
+                  <Button variant="ghost" asChild className="w-full" onClick={() => setIsMenuOpen(false)}>
                     <Link href="/register">
                       <UserPlus className="h-4 w-4 mr-2" />
                       Register
@@ -139,6 +153,48 @@ export default function Home_Page() {
               ))}
           </nav>
         </div>
+        {isMenuOpen && (
+          <div className="md:hidden">
+            <nav className="flex flex-col items-center space-y-2 py-4 border-t">
+              {!loading &&
+                (user ? (
+                  <>
+                    <Button variant="ghost" asChild className="w-full">
+                      <Link href="/history">
+                        <History className="h-4 w-4 mr-2" />
+                        History
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" asChild className="w-full">
+                      <Link href="/saved">
+                        <Heart className="h-4 w-4 mr-2" />
+                        Saved Products
+                      </Link>
+                    </Button>
+                    <Button onClick={handleLogout} variant="ghost" className="w-full">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="ghost" asChild className="w-full">
+                      <Link href="/login">
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Login
+                      </Link>
+                    </Button>
+                    <Button asChild className="w-full">
+                      <Link href="/register">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Register
+                      </Link>
+                    </Button>
+                  </>
+                ))}
+            </nav>
+          </div>
+        )}
       </header>
 
       <main className="flex-1">
