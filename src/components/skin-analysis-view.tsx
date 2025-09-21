@@ -1,4 +1,3 @@
-
 // 'use client';
 
 // import { useState, useCallback, ChangeEvent, useRef } from 'react';
@@ -30,7 +29,7 @@
 // import { ProductCarousel } from './product-carousel';
 // import { useAuth } from '@/hooks/use-auth';
 // import { db } from '@/lib/firebase';
-// import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+// import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 // import { useToast } from '@/hooks/use-toast';
 
 
@@ -92,34 +91,70 @@
 
 //   const handleAnalysis = useCallback(async () => {
 //     if (!photo) return;
-    
+
 //     setIsLoading(true);
 //     setError(null);
-    
-//     try {
-//       const reader = new FileReader();
-//       reader.readAsDataURL(photo);
-//       reader.onloadend = async () => {
-//         try {
-//           const photoDataUri = reader.result as string;
-//           const result = await analyzeSkinCondition({ photoDataUri });
-//           setAnalysis(result);
-//           if (user) {
-//             await saveAnalysisToFirestore(result, photoDataUri);
+
+//     const reader = new FileReader();
+//     reader.readAsDataURL(photo);
+//     reader.onloadend = async () => {
+//       const photoDataUri = reader.result as string;
+//       let historyDocRef;
+
+//       try {
+//         // If user is logged in, create a pending record first
+//         if (user) {
+//           try {
+//             const historyRef = collection(db, 'users', user.uid, 'analysisHistory');
+//             historyDocRef = await addDoc(historyRef, {
+//               photoDataUri,
+//               timestamp: serverTimestamp(),
+//               status: 'pending', // To indicate analysis is in progress
+//               concerns: [],
+//               report: 'Analysis in progress...',
+//             });
+//           } catch (e) {
+//              console.error("Error creating pending analysis record: ", e);
+//              // We can proceed without saving, but we'll show a toast.
+//              toast({ variant: 'destructive', title: "Save Failed", description: "Could not create a record to save your analysis." });
 //           }
-//         } catch(e) {
-//            setError('An error occurred during analysis. Please try again.');
-//            console.error(e);
-//         } finally {
-//            setIsLoading(false);
 //         }
+        
+//         // Perform the AI analysis
+//         const result = await analyzeSkinCondition({ photoDataUri });
+//         setAnalysis(result);
+        
+//         // If a pending record was created, update it with the analysis result
+//         if (historyDocRef) {
+//           await updateDoc(historyDocRef, {
+//             ...result,
+//             status: 'completed',
+//           });
+//           toast({ title: "Analysis Saved", description: "Your analysis report has been saved to your history." });
+//         } else if (user) {
+//             // This case handles if the initial pending save failed but we still want to try saving the final result.
+//             await saveAnalysisToFirestore(result, photoDataUri)
+//         }
+
+//       } catch (e) {
+//         setError('An error occurred during analysis. Please try again.');
+//         console.error(e);
+//         // If analysis fails, update the record to reflect failure
+//         if (historyDocRef) {
+//           await updateDoc(historyDocRef, {
+//             status: 'failed',
+//             report: 'Analysis failed. Please try again.',
+//           });
+//         }
+//       } finally {
+//         setIsLoading(false);
 //       }
-//     } catch (e) {
-//       setError('An error occurred reading the file. Please try again.');
-//       console.error(e);
-//       setIsLoading(false);
+//     };
+//     reader.onerror = () => {
+//         setError('An error occurred reading the file. Please try again.');
+//         setIsLoading(false);
 //     }
-//   }, [photo, user]);
+//   }, [photo, user, toast]);
 
 //   const resetState = () => {
 //     setPhoto(null);
@@ -282,7 +317,6 @@
 // }
 
 
-
 'use client';
 
 import { useState, useCallback, ChangeEvent, useRef } from 'react';
@@ -314,7 +348,7 @@ import {
 import { ProductCarousel } from './product-carousel';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -373,6 +407,22 @@ export function SkinAnalysisView() {
     }
   };
 
+  const getPhotoDataUri = (photoFile: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to read file as Data URI'));
+        }
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      reader.readAsDataURL(photoFile);
+    });
+  };
 
   const handleAnalysis = useCallback(async () => {
     if (!photo) return;
@@ -380,66 +430,22 @@ export function SkinAnalysisView() {
     setIsLoading(true);
     setError(null);
 
-    const reader = new FileReader();
-    reader.readAsDataURL(photo);
-    reader.onloadend = async () => {
-      const photoDataUri = reader.result as string;
-      let historyDocRef;
+    try {
+      const photoDataUri = await getPhotoDataUri(photo);
+      const result = await analyzeSkinCondition({ photoDataUri });
+      
+      setAnalysis(result);
 
-      try {
-        // If user is logged in, create a pending record first
-        if (user) {
-          try {
-            const historyRef = collection(db, 'users', user.uid, 'analysisHistory');
-            historyDocRef = await addDoc(historyRef, {
-              photoDataUri,
-              timestamp: serverTimestamp(),
-              status: 'pending', // To indicate analysis is in progress
-              concerns: [],
-              report: 'Analysis in progress...',
-            });
-          } catch (e) {
-             console.error("Error creating pending analysis record: ", e);
-             // We can proceed without saving, but we'll show a toast.
-             toast({ variant: 'destructive', title: "Save Failed", description: "Could not create a record to save your analysis." });
-          }
-        }
-        
-        // Perform the AI analysis
-        const result = await analyzeSkinCondition({ photoDataUri });
-        setAnalysis(result);
-        
-        // If a pending record was created, update it with the analysis result
-        if (historyDocRef) {
-          await updateDoc(historyDocRef, {
-            ...result,
-            status: 'completed',
-          });
-          toast({ title: "Analysis Saved", description: "Your analysis report has been saved to your history." });
-        } else if (user) {
-            // This case handles if the initial pending save failed but we still want to try saving the final result.
-            await saveAnalysisToFirestore(result, photoDataUri)
-        }
-
-      } catch (e) {
-        setError('An error occurred during analysis. Please try again.');
-        console.error(e);
-        // If analysis fails, update the record to reflect failure
-        if (historyDocRef) {
-          await updateDoc(historyDocRef, {
-            status: 'failed',
-            report: 'Analysis failed. Please try again.',
-          });
-        }
-      } finally {
-        setIsLoading(false);
+      if (user) {
+        await saveAnalysisToFirestore(result, photoDataUri);
       }
-    };
-    reader.onerror = () => {
-        setError('An error occurred reading the file. Please try again.');
-        setIsLoading(false);
+    } catch (e) {
+      console.error(e);
+      setError('An error occurred during analysis. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-  }, [photo, user, toast]);
+  }, [photo, user]);
 
   const resetState = () => {
     setPhoto(null);
@@ -600,5 +606,6 @@ export function SkinAnalysisView() {
     </div>
   );
 }
+
 
     
